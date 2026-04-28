@@ -1,6 +1,6 @@
 .env
 */.env
 .venv
-*.csv
-mailClassification/*.csv
+*.json
+mailClassification/*.json
 */__pycache__

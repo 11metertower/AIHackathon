@@ -14,29 +14,23 @@ if not API_KEY:
     print("오류: .env 파일에 GEMINI_API_KEY를 찾을 수 없습니다.")
     exit()
 
-INPUT_FILE = "gmail_list.csv"
-OUTPUT_FILE = "classified_list.csv"
+INPUT_FILE = "gmail_list.json"
+OUTPUT_FILE = "classified_list.json"
 
 def main():
-    print("1. CSV 파일 읽는 중...")
+    print("1. JSON 파일 읽는 중...")
     try:
-        with open(INPUT_FILE, mode="r", encoding="utf-8-sig") as infile:
-            cleaned_lines = (line.replace('\0', '') for line in infile)
-            reader = csv.reader(cleaned_lines)
-            rows = list(reader)
+        with open(INPUT_FILE, "r", encoding="utf-8") as f:
+            emails = json.load(f)
     except FileNotFoundError:
-        print("CSV 파일을 찾을 수 없습니다.")
+        print("JSON 파일을 찾을 수 없습니다.")
         return
-
-    header = rows[0]
-    emails = [row for row in rows[1:] if len(row) >= 3]
 
     print(f"2. {len(emails)}개의 이메일을 Gemini Flash 모델로 전송 중... (약 3~5초 소요)")
     
-    # AI에게 보낼 JSON 데이터 만들기
     email_data_for_ai = []
-    for i, row in enumerate(emails):
-        email_data_for_ai.append({"id": i, "subject": row[2]})
+    for i, item in enumerate(emails):
+        email_data_for_ai.append({"id": i, "subject": item.get("Title", "")})
 
     prompt = f"""
     당신은 이메일 분류 전문가입니다. 아래 JSON 데이터를 보고 각 이메일의 제목(subject)을 분석하세요.
@@ -71,24 +65,18 @@ def main():
         # 텍스트를 파이썬 리스트로 변환
         classified_results = json.loads(text_response)
         
-        print("3. 분류 완료! 결과를 새로운 CSV에 저장합니다...")
+        print("3. 분류 완료! 결과를 새로운 JSON에 저장합니다...")
         
-        # 기존 데이터에 'Category' 합치기
-        header.append("Category")
-        data_to_save = [header]
-        
-        for i, row in enumerate(emails):
+        for i, item in enumerate(emails):
             # AI가 답변한 결과에서 id가 일치하는 카테고리 찾기
             category = next((item["category"] for item in classified_results if item.get("id") == i), "분류 실패")
-            row.append(category)
-            data_to_save.append(row)
+            item["Category"] = category
 
         # 새 파일로 저장
-        with open(OUTPUT_FILE, mode="w", newline="", encoding="utf-8-sig") as outfile:
-            writer = csv.writer(outfile)
-            writer.writerows(data_to_save)
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            json.dump(emails, f, ensure_ascii=False, indent=4)
             
-        print(f"\n✅ 성공! 100개의 메일이 눈 깜짝할 새에 분류되어 '{OUTPUT_FILE}'에 저장되었습니다.")
+        print(f"\n✅ 성공! 분류 결과가 '{OUTPUT_FILE}'에 저장되었습니다.")
 
     except Exception as e:
         print(f"\n에러가 발생했습니다: {e}")
