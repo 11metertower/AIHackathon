@@ -12,7 +12,7 @@
 ### 1. 필수 라이브러리 설치
 
 ```bash
-pip install python-dotenv requests
+pip install -r requirements.txt
 ```
 
 ### 2. 환경 변수 설정

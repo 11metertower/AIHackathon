@@ -1,0 +1,9 @@
+services:
+  mail-classifier:
+    build: .
+    container_name: mail-ai-classifier
+    env_file:
+      - .env
+    volumes:
+      # 생성된 CSV 파일을 호스트 환경에서도 바로 볼 수 있도록 볼륨 매핑
+      - .:/app

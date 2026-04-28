@@ -2,10 +2,12 @@ import os
 import csv
 import json
 import requests
+from pathlib import Path
 from dotenv import load_dotenv
 
-# 환경 변수 불러오기
-load_dotenv()
+# 현재 파일(classify.py)의 상위 디렉토리(root)에 있는 .env 파일을 로드
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 if not API_KEY:

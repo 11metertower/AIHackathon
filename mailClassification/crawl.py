@@ -3,10 +3,12 @@ import imaplib
 import email
 import csv
 from email.header import decode_header
+from pathlib import Path
 from dotenv import load_dotenv
 
-# .env 파일에서 환경 변수 불러오기
-load_dotenv()
+# 현재 파일(crawl.py)의 상위 디렉토리(root)에 있는 .env 파일을 로드
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 EMAIL_ADDRESS = os.getenv("GMAIL_ID")
 APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
