@@ -16,6 +16,7 @@ if not API_KEY:
 
 INPUT_FILE = "gmail_list.json"
 OUTPUT_FILE = "classified_list.json"
+CATEGORY_FILE = "category.json"
 
 def main():
     print("1. JSON 파일 읽는 중...")
@@ -33,11 +34,14 @@ def main():
         email_data_for_ai.append({"id": i, "subject": item.get("Title", "")})
 
     prompt = f"""
-    당신은 이메일 분류 전문가입니다. 아래 JSON 데이터를 보고 각 이메일의 제목(subject)을 분석하세요.
-    반드시 다음 카테고리 중 하나로만 분류해야 합니다: ["광고/프로모션", "결제/영수증", "업무/알림", "뉴스레터", "기타"]
-    
-    분류 결과를 아래와 같은 JSON 배열(Array) 형식으로만 대답하세요. 다른 말은 절대 하지 마세요.
-    예시: [{{"id": 0, "category": "광고/프로모션"}}, {{"id": 1, "category": "업무/알림"}}]
+    당신은 이메일 분류 전문가입니다. 제공된 이메일 제목들을 분석하여 전체 이메일을 가장 잘 대표할 수 있는 5가지 카테고리를 직접 생성하세요.
+    그리고 생성한 카테고리에 따라 각 이메일을 분류하세요.
+
+    반드시 아래의 JSON 구조로만 대답하세요. 다른 설명은 생략하세요:
+    {{
+      "categories": ["카테고리1", "카테고리2", "카테고리3", "카테고리4", "카테고리5"],
+      "results": [{{"id": 0, "category": "카테고리1"}}, {{"id": 1, "category": "카테고리2"}}]
+    }}
     
     분류할 데이터:
     {json.dumps(email_data_for_ai, ensure_ascii=False)}
@@ -62,14 +66,21 @@ def main():
         result_data = response.json()
         text_response = result_data["candidates"][0]["content"]["parts"][0]["text"]
         
-        # 텍스트를 파이썬 리스트로 변환
-        classified_results = json.loads(text_response)
+        # AI 답변을 JSON 객체로 변환
+        response_json = json.loads(text_response)
+        categories = response_json.get("categories", [])
+        results = response_json.get("results", [])
         
-        print("3. 분류 완료! 결과를 새로운 JSON에 저장합니다...")
+        print(f"3. 생성된 카테고리: {', '.join(categories)}")
+        print("4. 결과를 저장 중...")
+
+        # 5가지 카테고리 목록 저장
+        with open(CATEGORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(categories, f, ensure_ascii=False, indent=4)
         
         for i, item in enumerate(emails):
             # AI가 답변한 결과에서 id가 일치하는 카테고리 찾기
-            category = next((item["category"] for item in classified_results if item.get("id") == i), "분류 실패")
+            category = next((res["category"] for res in results if res.get("id") == i), "분류 실패")
             item["Category"] = category
 
         # 새 파일로 저장
