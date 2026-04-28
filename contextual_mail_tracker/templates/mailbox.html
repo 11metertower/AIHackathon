@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ category }} - Contextual Mail Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Mail Tracker</h2>
+            <nav>
+                <ul id="mailbox-list">
+                    <li><a href="{{ url_for('inbox') }}">받은 메일함</a></li>
+                    <!-- 카테고리는 JS로 자동 로드됨 -->
+                </ul>
+            </nav>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #34495e;">
+                <p style="font-size: 0.8rem; color: #bdc3c7;">{{ session['user_id'] }}</p>
+                <a href="{{ url_for('logout') }}" style="color: #e74c3c; text-decoration: none; font-size: 0.9rem;">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1>{{ category }}</h1>
+            </div>
+
+            <div class="email-list">
+                {% for email in emails %}
+                <div class="email-item" onclick="location.href='{{ url_for('mail_view', mail_id=emails.index(email)) }}'">
+                    <div class="email-info">
+                        <div class="email-title">{{ email['Title'] }}</div>
+                        <div class="email-sender">{{ email['Sender'] }}</div>
+                    </div>
+                    <div class="email-date">{{ email['Date'] }}</div>
+                </div>
+                {% else %}
+                <div style="padding: 20px; text-align: center; color: #7f8c8d;">이 카테고리에 메일이 없습니다.</div>
+                {% endfor %}
+            </div>
+        </main>
+
+        <aside class="chat-panel">
+            <div class="chat-header">AI Chat - {{ category }}</div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="message ai-message">안녕하세요! '{{ category }}' 메일함에 대해 궁금한 점이 있으신가요?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input-text" placeholder="메시지를 입력하세요...">
+                <button id="btn-chat-send">전송</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // 사이드바 카테고리 로드
+        fetch('/api/categories')
+            .then(response => response.json())
+            .then(categories => {
+                const list = document.getElementById('mailbox-list');
+                const currentCategory = "{{ category }}";
+                categories.forEach(cat => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = '/mailbox/' + encodeURIComponent(cat);
+                    a.textContent = cat;
+                    if (cat === currentCategory) {
+                        a.className = 'active';
+                    }
+                    li.appendChild(a);
+                    list.appendChild(li);
+                });
+            });
+
+        // 채팅 기능
+        const chatInput = document.getElementById('chat-input-text');
+        const chatSend = document.getElementById('btn-chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+
+        function appendMessage(text, isUser) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + (isUser ? 'user-message' : 'ai-message');
+            msgDiv.textContent = text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatSend.addEventListener('click', function() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendMessage(message, true);
+            chatInput.value = '';
+
+            // AI 타이핑 표시 (가상)
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai-message';
+            typingDiv.textContent = '...';
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, category: "{{ category }}" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatMessages.removeChild(typingDiv);
+                appendMessage(data.response, false);
+            });
+        });
+
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') chatSend.click();
+        });
+    </script>
+</body>
+</html>

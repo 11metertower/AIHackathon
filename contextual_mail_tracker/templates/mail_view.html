@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>메일 보기 - Contextual Mail Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .mail-view-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .mail-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .mail-header h2 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .mail-meta {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        .mail-body {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Mail Tracker</h2>
+            <nav>
+                <ul id="mailbox-list">
+                    <li><a href="{{ url_for('inbox') }}">받은 메일함</a></li>
+                </ul>
+            </nav>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #34495e;">
+                <p style="font-size: 0.8rem; color: #bdc3c7;">{{ session['user_id'] }}</p>
+                <a href="{{ url_for('logout') }}" style="color: #e74c3c; text-decoration: none; font-size: 0.9rem;">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <a href="javascript:history.back()" class="btn-back">&larr; 뒤로 가기</a>
+            
+            <div class="mail-view-container">
+                <div class="mail-header">
+                    <h2>{{ mail['Title'] }}</h2>
+                    <div class="mail-meta">
+                        <div><strong>보낸 사람:</strong> {{ mail['Sender'] }}</div>
+                        <div><strong>날짜:</strong> {{ mail['Date'] }}</div>
+                        <div><strong>분류:</strong> {{ mail['Category'] }}</div>
+                    </div>
+                </div>
+                <div class="mail-body">
+                    {{ mail['Body'] | safe }}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 사이드바 카테고리 로드
+        fetch('/api/categories')
+            .then(response => response.json())
+            .then(categories => {
+                const list = document.getElementById('mailbox-list');
+                categories.forEach(cat => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = '/mailbox/' + encodeURIComponent(cat);
+                    a.textContent = cat;
+                    li.appendChild(a);
+                    list.appendChild(li);
+                });
+            });
+    </script>
+</body>
+</html>
