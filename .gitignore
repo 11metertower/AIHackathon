@@ -1,2 +1,3 @@
 */.env
-mailClassification/gmail_list.csv
+.venv
+mailClassification/*.csv
