@@ -1,2 +1,9 @@
 python-dotenv
 requests
+google-generativeai
+langchain
+langchain-google-genai
+langchain-community
+faiss-cpu
+python-dotenv
+beautifulsoup4
