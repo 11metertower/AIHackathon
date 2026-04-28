@@ -1,16 +1,36 @@
 import os
 import json
 import time
+import sys
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+
+# mailchatbot 폴더를 모듈 경로에 추가
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MAIL_CHATBOT_DIR = os.path.join(os.path.dirname(BASE_DIR), 'mailchatbot')
+if MAIL_CHATBOT_DIR not in sys.path:
+    sys.path.insert(0, MAIL_CHATBOT_DIR)
+
+from main import ChatbotService
 
 app = Flask(__name__)
 app.secret_key = 'contextual_mail_tracker_secret'
 
 # 데이터 파일 경로
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), 'jsonData')
 CLASSIFIED_LIST_PATH = os.path.join(DATA_DIR, 'classified_list.json')
 CATEGORY_PATH = os.path.join(DATA_DIR, 'category.json')
+
+# ChatbotService 초기화 (지연 로딩 권장되지만 여기서는 전역으로 시도)
+chatbot_service = None
+
+def get_chatbot_service():
+    global chatbot_service
+    if chatbot_service is None:
+        try:
+            chatbot_service = ChatbotService()
+        except Exception as e:
+            print(f"Error initializing ChatbotService: {e}")
+    return chatbot_service
 
 def load_emails(limit=100):
     try:
@@ -82,10 +102,17 @@ def ai_chat():
     user_message = data.get('message')
     category = data.get('category')
     
-    # AI 요청을 기다리는 가상의 딜레이
-    time.sleep(1.5)
+    service = get_chatbot_service()
+    if service:
+        try:
+            # answer_question 내부에서 AI 요청 및 검색이 수행됨 (자연스러운 딜레이 발생)
+            response = service.answer_question(user_message, category)
+            return jsonify({"response": response})
+        except Exception as e:
+            print(f"Error in ai_chat: {e}")
+            return jsonify({"response": f"오류가 발생했습니다: {str(e)}"}), 500
     
-    return jsonify({"response": "미구현되었습니다."})
+    return jsonify({"response": "Chatbot Service를 사용할 수 없습니다."}), 503
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

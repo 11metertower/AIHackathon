@@ -13,9 +13,12 @@ class ChatbotService:
         self.gemini = GeminiService()
         
         # 카테고리 로드
-        category_file = "../category.json"
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        category_file = os.path.join(base_dir, "jsonData", "category.json")
+        
         if not os.path.exists(category_file):
-            category_file = "category.json"
+             # Fallback to local if jsonData not found (though according to structure it should be there)
+             category_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "category.json")
         
         with open(category_file, 'r', encoding='utf-8') as f:
             self.categories = json.load(f)
