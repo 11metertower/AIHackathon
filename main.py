@@ -17,7 +17,7 @@ def run_pipeline():
         output_file="gmail_list.json"
     )
     
-    # 2. 분류 (classify.py의 기능을 호출하여 classified_list.csv 생성)
+    # 2. 분류 (classify.py의 기능을 호출하여 classified_list.json 생성)
     print("\n[Step 2] AI 카테고리 분류 중...")
     classify_main()
     
